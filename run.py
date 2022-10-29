@@ -1,10 +1,13 @@
 import sys
 from pyautogui import size
+from requests import get
+from io import BytesIO
 
 from PIL import Image
 from PIL.ImageQt import ImageQt
 
-from uic import Ui_MainWindow
+from main import Ui_MainWindow
+from load_image import Ui_Form
 from effects import *
 
 from PyQt5 import QtCore
@@ -22,19 +25,36 @@ WINDOW_POSITIONS = (
         )
 
 
-class MyWidget(QMainWindow, Ui_MainWindow):
+class LoadImage(QMainWindow, Ui_Form):
+    def __init__(self, parent):
+         super(LoadImage, self).__init__(parent)
+         self.setupUi(self)
+         self.initUI()
+        
+    def initUI(self):
+        WINDOW_SIZE = (601, 323)
+        WINDOW_POSITIONS = (
+            SCREEN_SIZE[0] // 2 - WINDOW_SIZE[0] // 2,
+            SCREEN_SIZE[1] // 2 - WINDOW_SIZE[1] // 2
+        )
+        self.setGeometry(*WINDOW_POSITIONS, *WINDOW_SIZE)
+        self.setFixedSize(*WINDOW_SIZE)
+
+
+class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.initUI()
     
     def initUI(self):
-            
+        self.open_url_form = LoadImage(self)
 
         self.setGeometry(*WINDOW_POSITIONS, *WINDOW_SIZE)
         self.setFixedSize(*WINDOW_SIZE)
 
         self.history = []
+        self.sliders_history = []
         self.image_index = 0
 
         self.scaled_size = [None, None]
@@ -42,6 +62,9 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         # file open/save
         self.actionopen.triggered.connect(self.load_image)
         self.actionsave.triggered.connect(self.save_image)
+
+        self.actionopen_from_URL.triggered.connect(self.load_from_url_form)
+        self.open_url_form.load_url_btn.clicked.connect(self.load_from_url)
 
         # theme
         self.action_darktheme.triggered.connect(self.set_dark_theme)
@@ -95,11 +118,15 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.alpha_slider.valueChanged.connect(self.change_transparency)
     
     def change_transparency(self):
+        if self.check_if_image_opened():  # check for image opened
+                return
         self.image_PIL = transparensy(self.image_PIL, self.sender().value())
         self.update_image()
     
     def change_channels(self, slider, chan):
         def inner():
+            if self.check_if_image_opened():  # check for image opened
+                return
             val = slider.value()
             rgb = tuple(map(lambda n: val if n == 1 else 50, chan))
             self.image.setPixmap(convert_to_qt(channels(self.image_PIL.resize(self.scaled_size), rgb)))
@@ -107,6 +134,8 @@ class MyWidget(QMainWindow, Ui_MainWindow):
     
     def apply_channel_changes(self, slider, chan):
         def inner():
+            if self.check_if_image_opened():  # check for image opened
+                return
             val = slider.value()
             rgb = tuple(map(lambda n: val if n == 1 else 50, chan))
             self.image_PIL = channels(self.image_PIL, rgb)
@@ -115,16 +144,22 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         return inner
     
     def set_box_blur(self):
+        if self.check_if_image_opened():  # check for image opened
+                return
         raduis = self.spin_box_blur_raduis.value()
         self.image_PIL = box_blur(self.image_PIL, raduis)
         self.update_image()
 
     def set_gaussian_blur(self):
+        if self.check_if_image_opened():  # check for image opened
+                return
         raduis = self.spin_gaussian_blur_raduis.value()
         self.image_PIL = gaussian_blur(self.image_PIL, raduis)
         self.update_image()
     
     def set_unsharp_mask(self):
+        if self.check_if_image_opened():  # check for image opened
+                return
         raduis = self.unsharp_mask_raduis_spin.value()
         percent = self.unsharp_mask_percent_spin.value()
         threshold = self.unsharp_mask_threshold_spin.value()
@@ -132,40 +167,44 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.update_image()
     
     def set_stereo(self):
+        if self.check_if_image_opened():  # check for image opened
+                return
         delta = self.stereo_delta_spin.value()
         self.image_PIL = stereo_effect(self.image_PIL, delta)
         self.update_image()
     
     def set_square_effect(self):
+        if self.check_if_image_opened():  # check for image opened
+                return
         area = self.square_effect_area_spin.value()
         self.image_PIL = lightest_pixel_effect(self.image_PIL, area)
         self.update_image()
     
     def set_black_and_white(self):
+        if self.check_if_image_opened():  # check for image opened
+                return
         self.image_PIL = black_and_white_effect(self.image_PIL)
         self.update_image()
     
     def set_negative(self):
+        if self.check_if_image_opened():  # check for image opened
+                return
         self.image_PIL = negative_effect(self.image_PIL)
         self.update_image()
 
     def set_presets(self):
+        if self.check_if_image_opened():  # check for image opened
+                return
         self.image_PIL = preset_filters(self.image_PIL, filters[self.sender().text()])
         self.update_image()
     
-    def load_image(self):
+    def convert_image(self, image):
         self.history = []
+        self.sliders_history = []
 
-        filename = QFileDialog.getOpenFileName(
-            self, 'Choose photo', '',
-            'Pictures (*.png *.jpg);; Pictures (*.png);; Pictures (*.jpg)')[0].strip()
-        if not filename:
-            return
-        # filename = "/home/anchous/Pictures/waves.png"
-        self.image_PIL = Image.open(filename)
 
         # делаем изображение меньше, если оно не влезает в рамки
-        width, height = self.image_PIL.size
+        width, height = image.size
 
         scale1 = scale2 = 1
 
@@ -185,7 +224,19 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.image.move(0, 0)
         self.image.setAlignment(QtCore.Qt.AlignCenter)
         self.update_image()
-    
+        self.recet_image()
+
+    def load_image(self):
+        filename = QFileDialog.getOpenFileName(
+            self, 'Choose photo', '',
+            'Pictures (*.png *.jpg);; Pictures (*.png);; Pictures (*.jpg)')[0].strip()
+        if not filename:
+            return
+        # filename = "/home/anchous/Pictures/waves.png"
+        self.image_PIL = Image.open(filename)
+
+        self.convert_image(self.image_PIL)
+
     def save_image(self):
         filename = QFileDialog.getSaveFileName(
             self, 'Save photo', '',
@@ -194,18 +245,47 @@ class MyWidget(QMainWindow, Ui_MainWindow):
             return
         self.image_PIL.save(filename)
 
+    def load_from_url_form(self):
+        self.open_url_form.show()
+    
+    def load_from_url(self):
+        try:
+            url = self.open_url_form.url_text.toPlainText()
+            response = get(url)
+            self.image_PIL = Image.open(BytesIO(response.content))
+
+            self.convert_image(self.image_PIL)
+            self.open_url_form.url_text.setPlainText("")
+            self.open_url_form.close()
+        except Exception:
+            return
+
     def update_image(self):
         self.history.append(self.image_PIL)
+        self.sliders_history.append(
+            (
+                self.alpha_slider.value(),
+                self.red_slider.value(),
+                self.green_slider.value(),
+                self.blue_slider.value()
+            )
+        )
         self.image_index += 1
         self.image.setPixmap(convert_to_qt(self.image_PIL.resize(self.scaled_size)))
     
     def previous_image(self):
         if self.image_index > 0:
             del self.history[self.image_index:]
+            del self.sliders_history[self.image_index:]
             self.image_index -= 1
             self.image_PIL = self.history[self.image_index]
 
-            # updating image without history ligging
+            self.alpha_slider.setValue(self.sliders_history[-1][0])
+            self.red_slider.setValue(self.sliders_history[-1][1])
+            self.green_slider.setValue(self.sliders_history[-1][2])
+            self.blue_slider.setValue(self.sliders_history[-1][3])
+
+            # updating image without history logging
             self.image.setPixmap(convert_to_qt(self.image_PIL.resize(self.scaled_size)))
 
     def recet_image(self):
@@ -217,6 +297,7 @@ class MyWidget(QMainWindow, Ui_MainWindow):
 
         self.image_index = 0
         self.history = [self.image_PIL]
+        self.sliders_history = [(255, 50, 50, 50)]
 
     def set_dark_theme(self):
         self.setStyleSheet("background-color: #353535;\ncolor: #dddddd;")
@@ -228,8 +309,15 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.frame.setStyleSheet("background-color: #cccccc;")
         self.tabs_effects.setStyleSheet("background-color: #dddddd;\ncolor: #202020;")
 
+    def check_if_image_opened(self):
+        try:
+            self.image_PIL  # check if image opened
+            return False
+        except AttributeError:
+            return True
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ex = MyWidget()
+    ex = MainWindow()
     ex.show()
     sys.exit(app.exec_())

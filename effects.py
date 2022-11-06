@@ -4,8 +4,7 @@ from PIL.ImageQt import ImageQt
 from PyQt5.QtGui import QPixmap
 import numpy as np
 
-
-# Функция для конфертации изображения PIL в изображение QPixmap
+# Convert PIL Image to QPixmap
 def convert_to_qt(image):
     return QPixmap.fromImage(ImageQt(image).copy())
 
@@ -68,13 +67,12 @@ def transparensy(im, alpha):
     im_rgba = im_rgb.copy()
     im_rgba.putalpha(alpha)
     return im_rgba
-    # return im_rgba
 
 
 #--------------------------------------------------------
 
 def stereo_effect(im, delta):
-    # создает эффект стереопары
+    # creates a stereo effect
     delta //= 2
     pixels_im = im.load()
     new_im = im.copy()
@@ -89,7 +87,7 @@ def stereo_effect(im, delta):
 
 
 def lightest_pixel(pixels, i, j, x, y, area):
-    # Заменяет цвет исходного пикселя на самый яркий цвет в его окружении
+    # changes the color of a pixel to the color of the lightest pixel in the near area
     r = g = b = 0
     for row in range(i - area, i + area):
         for col in range(j - area, j + area):
@@ -121,7 +119,3 @@ def negative_effect(im):
     img_reversed_data = 255 - img_data
     img_reversed = Image.fromarray(img_reversed_data)
     return img_reversed
-
-
-# file1 = Image.open("/home/anchous/Pictures/dart_vader.jpg")
-# negative_effect(file1)

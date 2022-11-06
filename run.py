@@ -243,7 +243,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             'Pictures (*.png);; Pictures (*.jpg)')[0].strip()
         if not filename:
             return
-        self.image_PIL.save(filename)
+        try:
+            self.image_PIL.save(filename)
+        except Exception:
+            new_filename = QFileDialog.getSaveFileName(
+            self, 'Save photo', f"{filename.split('.')[0]}.png",
+            'Pictures (*.png);; Pictures (*.jpg)')[0].strip()
+            self.image_PIL.save(new_filename)
 
     def load_from_url_form(self):
         self.open_url_form.show()

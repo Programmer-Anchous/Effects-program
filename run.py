@@ -4,15 +4,13 @@ from requests import get
 from io import BytesIO
 
 from PIL import Image
-# from PIL.ImageQt import ImageQt
 
 from main import Ui_MainWindow
 from load_image import Ui_Form
 from effects import *
 
 from PyQt5 import QtCore
-# from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QFileDialog
 
 
@@ -286,6 +284,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.open_url_form.url_text.setPlainText("")
             self.open_url_form.close()
         except Exception:
+            self.statusbar.showMessage("Error: Incorrect URL", 5000)
             return
 
     def update_image(self):
@@ -362,8 +361,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return "dark"
 
 
+def except_hook(cls, exception, traceback):
+    sys.__excepthook__(cls, exception, traceback)
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     ex = MainWindow()
     ex.show()
+    sys.excepthook = except_hook
     sys.exit(app.exec_())

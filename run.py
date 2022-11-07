@@ -4,14 +4,14 @@ from requests import get
 from io import BytesIO
 
 from PIL import Image
-from PIL.ImageQt import ImageQt
+# from PIL.ImageQt import ImageQt
 
 from main import Ui_MainWindow
 from load_image import Ui_Form
 from effects import *
 
 from PyQt5 import QtCore
-from PyQt5.QtGui import QPixmap
+# from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow
 from PyQt5.QtWidgets import QFileDialog
 
@@ -116,6 +116,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ]
         
         self.alpha_slider.valueChanged.connect(self.change_transparency)
+
+        #  load theme from .txt file
+        theme = self.load_theme()
+        if theme == "dark":
+            self.set_dark_theme()
+        else:
+            self.set_light_theme()
     
     def change_transparency(self):
         if self.check_if_image_opened():  # check for image opened
@@ -309,11 +316,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setStyleSheet("background-color: #353535;\ncolor: #dddddd;")
         self.frame.setStyleSheet("background-color: #282828;")
         self.tabs_effects.setStyleSheet("background-color: #353535;\ncolor: #dddddd;")
+        self.set_theme("dark")
     
     def set_light_theme(self):
         self.setStyleSheet("background-color: #dddddd;\ncolor: #202020;")
         self.frame.setStyleSheet("background-color: #cccccc;")
         self.tabs_effects.setStyleSheet("background-color: #dddddd;\ncolor: #202020;")
+        self.set_theme("light")
 
     def check_if_image_opened(self):
         try:
@@ -321,6 +330,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return False
         except AttributeError:
             return True
+
+    def set_theme(self, theme):
+        with open("app_theme.txt", "w", encoding="utf-8") as file1:
+            file1.write(theme)
+
+    def load_theme(self):
+        try:
+            with open("app_theme.txt", "r", encoding="utf-8") as file1:
+                data = file1.read().strip()
+                if data in ("dark", "light"):
+                    return data
+        except Exception:
+            pass
+        self.set_theme("dark")
+        return "dark"
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

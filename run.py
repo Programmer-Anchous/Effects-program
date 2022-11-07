@@ -57,6 +57,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sliders_history = []
         self.image_index = 0
 
+        self.image_PIL = None
+
         self.scaled_size = [None, None]
 
         # file open/save
@@ -123,6 +125,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.set_dark_theme()
         else:
             self.set_light_theme()
+        
+        self.statusbar = self.statusBar()
     
     def change_transparency(self):
         if self.check_if_image_opened():  # check for image opened
@@ -248,15 +252,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         filename = QFileDialog.getSaveFileName(
             self, 'Save photo', '',
             'Pictures (*.png);; Pictures (*.jpg)')[0].strip()
+        
         if not filename:
+            self.statusbar.showMessage("Error: No filename", 5000)
             return
-        try:
-            self.image_PIL.save(filename)
-        except Exception:
-            new_filename = QFileDialog.getSaveFileName(
-            self, 'Save photo', f"{filename.split('.')[0]}.png",
-            'Pictures (*.png);; Pictures (*.jpg)')[0].strip()
-            self.image_PIL.save(new_filename)
+        
+        if not self.image_PIL:
+            self.statusbar.showMessage("Error: No image", 5000)
+            return
+        
+        # while filename is incorrect ask for it
+        while True:
+            try:
+                self.image_PIL.save(filename)
+                return
+            except Exception:
+                self.statusbar.showMessage("Error: Incorrect filename", 5000)
+
+                filename = QFileDialog.getSaveFileName(
+                self, 'Save photo', f"{filename.split('.')[0]}.png",
+                'Pictures (*.png);; Pictures (*.jpg)')[0].strip()
 
     def load_from_url_form(self):
         self.open_url_form.show()

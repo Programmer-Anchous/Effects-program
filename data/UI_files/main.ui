@@ -742,8 +742,17 @@ border-radius: 4px;</string>
     </widget>
     <addaction name="menutheme"/>
    </widget>
+   <widget class="QMenu" name="menufilters_info">
+    <property name="title">
+     <string>info</string>
+    </property>
+    <addaction name="actionfilters_information"/>
+    <addaction name="actionfilters_history"/>
+    <addaction name="actionapplication_info"/>
+   </widget>
    <addaction name="menufile"/>
    <addaction name="menusettings"/>
+   <addaction name="menufilters_info"/>
   </widget>
   <action name="actionopen">
    <property name="text">
@@ -768,6 +777,21 @@ border-radius: 4px;</string>
   <action name="actionopen_from_URL">
    <property name="text">
     <string>&amp;open from URL</string>
+   </property>
+  </action>
+  <action name="actionfilters_information">
+   <property name="text">
+    <string>filters information</string>
+   </property>
+  </action>
+  <action name="actionfilters_history">
+   <property name="text">
+    <string>filters history</string>
+   </property>
+  </action>
+  <action name="actionapplication_info">
+   <property name="text">
+    <string>application info</string>
    </property>
   </action>
  </widget>

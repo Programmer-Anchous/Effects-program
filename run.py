@@ -1,15 +1,14 @@
 import sys
-from pyautogui import size
 from requests import get
 from io import BytesIO
 import sqlite3
 
 from PIL import Image
 
-from main import Ui_MainWindow
-from load_image import Ui_Form
-from description import Ui_Form_Desk
-from effects import *
+from data.PYTHON_files.main import Ui_MainWindow
+from data.PYTHON_files.load_image import Ui_Form
+from data.PYTHON_files.description import Ui_Form_Desk
+from data.PYTHON_files.effects import *
 
 from PyQt5.QtCore import Qt
 from PyQt5 import QtCore
@@ -19,11 +18,6 @@ from PyQt5.QtWidgets import QFileDialog
 
 WINDOW_SIZE = (1238, 859)
 IMAGE_FRAME_SIZE = (895, 775)
-SCREEN_SIZE = tuple(size())
-WINDOW_POSITIONS = (
-    SCREEN_SIZE[0] // 2 - WINDOW_SIZE[0] // 2,
-    SCREEN_SIZE[1] // 2 - WINDOW_SIZE[1] // 2,
-)
 
 
 class LoadImage(QMainWindow, Ui_Form):
@@ -34,11 +28,6 @@ class LoadImage(QMainWindow, Ui_Form):
 
     def initUI(self):
         WINDOW_SIZE = (601, 323)
-        WINDOW_POSITIONS = (
-            SCREEN_SIZE[0] // 2 - WINDOW_SIZE[0] // 2,
-            SCREEN_SIZE[1] // 2 - WINDOW_SIZE[1] // 2,
-        )
-        self.setGeometry(*WINDOW_POSITIONS, *WINDOW_SIZE)
         self.setFixedSize(*WINDOW_SIZE)
 
 
@@ -50,11 +39,6 @@ class ShowDescription(QMainWindow, Ui_Form_Desk):
 
     def initUI(self):
         WINDOW_SIZE = (770, 640)
-        WINDOW_POSITIONS = (
-            SCREEN_SIZE[0] // 2 - WINDOW_SIZE[0] // 2,
-            SCREEN_SIZE[1] // 2 - WINDOW_SIZE[1] // 2,
-        )
-        self.setGeometry(*WINDOW_POSITIONS, *WINDOW_SIZE)
         self.setFixedSize(*WINDOW_SIZE)
 
         self.text = ""
@@ -89,7 +73,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.open_url_form = LoadImage(self)
         self.show_description = ShowDescription(self)
 
-        self.setGeometry(*WINDOW_POSITIONS, *WINDOW_SIZE)
         self.setFixedSize(*WINDOW_SIZE)
 
         self.history = []
